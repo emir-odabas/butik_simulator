@@ -6,6 +6,7 @@ import '../../../core/design/components/ledger_page.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../data/models/product.dart';
 import '../../notifications/application/notification_providers.dart';
+import '../../orders/application/auto_order_service.dart';
 import '../../notifications/presentation/notifications_screen.dart';
 import '../../products/application/product_providers.dart';
 import '../../store/application/store_providers.dart';
@@ -34,6 +35,21 @@ class DashboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Ana Sayfa'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bolt_outlined),
+            tooltip: 'Test: Sipariş oluştur',
+            onPressed: () async {
+              await ref.read(autoOrderServiceProvider).triggerNow();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🛍️ Test siparişi oluşturuldu!'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+          ),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -63,6 +79,7 @@ class DashboardScreen extends ConsumerWidget {
           const SizedBox(width: AppSpacing.sm),
         ],
       ),
+
       body: LedgerPage(
         child: profileAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),

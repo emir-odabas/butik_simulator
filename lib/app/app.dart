@@ -9,6 +9,7 @@ import '../data/models/app_notification.dart';
 import '../data/models/store_profile.dart';
 import '../features/achievements/application/achievement_providers.dart';
 import '../features/notifications/application/notification_providers.dart';
+import '../features/orders/application/auto_order_service.dart';
 import '../features/store/application/store_providers.dart';
 
 /// Root widget of the app. Wires [GoRouter] and the light/dark [ThemeData]
@@ -27,6 +28,9 @@ class BoutiqueApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+
+    // Keep the auto-order timer running for the whole app lifetime.
+    ref.watch(autoOrderServiceProvider);
 
     ref.listen<AsyncValue<StoreProfile>>(storeProfileProvider, (previous, next) {
       final previousLevel = previous?.valueOrNull?.level;
