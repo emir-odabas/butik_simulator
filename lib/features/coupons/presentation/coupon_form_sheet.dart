@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design/components/clipboard_sheet.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/id_generator.dart';
 import '../../../data/models/coupon.dart';
@@ -57,67 +58,69 @@ class _CouponFormSheetState extends ConsumerState<_CouponFormSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.md,
-            AppSpacing.xl,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Yeni Kupon', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: AppSpacing.lg),
-              TextFormField(
-                controller: _codeController,
-                decoration: const InputDecoration(
-                  labelText: 'Kupon kodu',
-                  helperText: 'Örn. WELCOME10',
+      child: ClipboardSheet(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              AppSpacing.xl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Yeni Kupon', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: AppSpacing.lg),
+                TextFormField(
+                  controller: _codeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Kupon kodu',
+                    helperText: 'Örn. WELCOME10',
+                  ),
+                  textCapitalization: TextCapitalization.characters,
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Kod gerekli' : null,
                 ),
-                textCapitalization: TextCapitalization.characters,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Kod gerekli' : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextFormField(
-                controller: _discountController,
-                decoration: const InputDecoration(labelText: 'İndirim oranı (%)'),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'İndirim oranı gerekli';
-                  final value = double.tryParse(v.trim());
-                  if (value == null || value <= 0 || value > 90) return 'Geçersiz oran (1-90)';
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextFormField(
-                controller: _limitController,
-                decoration: const InputDecoration(labelText: 'Kullanım limiti'),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Limit gerekli';
-                  return int.tryParse(v.trim()) == null ? 'Geçersiz sayı' : null;
-                },
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              FilledButton(
-                onPressed: _isSaving ? null : _save,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Kuponu Oluştur'),
+                const SizedBox(height: AppSpacing.md),
+                TextFormField(
+                  controller: _discountController,
+                  decoration: const InputDecoration(labelText: 'İndirim oranı (%)'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'İndirim oranı gerekli';
+                    final value = double.tryParse(v.trim());
+                    if (value == null || value <= 0 || value > 90) return 'Geçersiz oran (1-90)';
+                    return null;
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                TextFormField(
+                  controller: _limitController,
+                  decoration: const InputDecoration(labelText: 'Kullanım limiti'),
+                  keyboardType: TextInputType.number,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Limit gerekli';
+                    return int.tryParse(v.trim()) == null ? 'Geçersiz sayı' : null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                FilledButton(
+                  onPressed: _isSaving ? null : _save,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Kuponu Oluştur'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

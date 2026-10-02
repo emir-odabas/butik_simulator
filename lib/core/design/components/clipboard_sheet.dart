@@ -13,13 +13,16 @@ import '../atelier_colors.dart';
 /// theme, so this stays a small, contained change rather than a second
 /// parallel theme system.
 ///
-/// Expects to be given a bounded height (e.g. the builder of a
-/// [DraggableScrollableSheet]) — its content area expands to fill it so
-/// the child's own scroll view works normally.
+/// Set [expand] to `true` when given a bounded height to fill (e.g. the
+/// builder of a [DraggableScrollableSheet], where the child is itself a
+/// scroll view) — the default `false` instead sizes to the child's own
+/// content, for short forms shown as an ordinary auto-sizing bottom
+/// sheet (e.g. in a [SingleChildScrollView]).
 class ClipboardSheet extends StatelessWidget {
-  const ClipboardSheet({super.key, required this.child});
+  const ClipboardSheet({super.key, required this.child, this.expand = false});
 
   final Widget child;
+  final bool expand;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +41,11 @@ class ClipboardSheet extends StatelessWidget {
       helperStyle: theme.textTheme.bodySmall,
     );
 
+    final themedChild = Theme(
+      data: theme.copyWith(inputDecorationTheme: underline),
+      child: child,
+    );
+
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -47,17 +55,13 @@ class ClipboardSheet extends StatelessWidget {
             border: Border(top: BorderSide(color: atelier.hairline)),
           ),
           child: Column(
+            mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.sm),
                 child: Container(width: 32, height: 3, color: atelier.hairline),
               ),
-              Expanded(
-                child: Theme(
-                  data: theme.copyWith(inputDecorationTheme: underline),
-                  child: child,
-                ),
-              ),
+              expand ? Expanded(child: themedChild) : themedChild,
             ],
           ),
         ),

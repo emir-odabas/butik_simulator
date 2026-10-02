@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design/atelier_colors.dart';
+import '../../../core/design/atelier_typography.dart';
+import '../../../core/design/components/ledger_page.dart';
+import '../../../core/design/components/ledger_row.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/money.dart';
 import '../../../data/models/store_profile.dart';
 import '../../campaigns/presentation/campaigns_screen.dart';
 import '../../coupons/presentation/coupons_screen.dart';
@@ -10,9 +15,11 @@ import '../../storefront/presentation/storefront_screen.dart';
 import '../application/store_providers.dart';
 import 'widgets/store_upgrades_section.dart';
 
-/// Store identity settings, the virtual-economy upgrade shop, and a
-/// management hub (campaigns, coupons, statistics) plus the entry point
-/// into the customer-facing storefront preview.
+/// The owner's workbench: store identity as letterhead, the renovation
+/// checklist, and the way into the other notebooks (campaigns, coupons,
+/// statistics) — not a settings screen. No `Card` anywhere on this page;
+/// see `store_upgrades_section.dart` for the checklist and the
+/// campaigns/coupons/statistics screens for the rest of the cluster.
 class StoreScreen extends ConsumerWidget {
   const StoreScreen({super.key});
 
@@ -33,30 +40,32 @@ class StoreScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Text('Mağaza bilgileri yüklenemedi: $error'),
+      body: LedgerPage(
+        child: profileAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Text('Mağaza bilgileri yüklenemedi: $error'),
+            ),
           ),
+          data: (profile) => _WorkbenchPage(key: ValueKey(profile.id), profile: profile),
         ),
-        data: (profile) => _StoreForm(key: ValueKey(profile.id), profile: profile),
       ),
     );
   }
 }
 
-class _StoreForm extends ConsumerStatefulWidget {
-  const _StoreForm({super.key, required this.profile});
+class _WorkbenchPage extends ConsumerStatefulWidget {
+  const _WorkbenchPage({super.key, required this.profile});
 
   final StoreProfile profile;
 
   @override
-  ConsumerState<_StoreForm> createState() => _StoreFormState();
+  ConsumerState<_WorkbenchPage> createState() => _WorkbenchPageState();
 }
 
-class _StoreFormState extends ConsumerState<_StoreForm> {
+class _WorkbenchPageState extends ConsumerState<_WorkbenchPage> {
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _logoController;
@@ -66,8 +75,7 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.profile.name)
-      ..addListener(_markDirty);
+    _nameController = TextEditingController(text: widget.profile.name)..addListener(_markDirty);
     _descriptionController = TextEditingController(text: widget.profile.description)
       ..addListener(_markDirty);
     _logoController = TextEditingController(text: widget.profile.logoUrl ?? '')
@@ -102,7 +110,7 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
         _isDirty = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mağaza bilgileri güncellendi')),
+        const SnackBar(content: Text('Antetli kağıt güncellendi')),
       );
     }
   }
@@ -110,111 +118,199 @@ class _StoreFormState extends ConsumerState<_StoreForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final atelier = theme.extension<AtelierColors>() ?? AtelierColors.light;
+
+    final underline = theme.inputDecorationTheme.copyWith(
+      filled: false,
+      contentPadding: const EdgeInsets.symmetric(vertical: 8),
+      border: UnderlineInputBorder(borderSide: BorderSide(color: atelier.hairline)),
+      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: atelier.hairline)),
+      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: atelier.seal, width: 1.6)),
+    );
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.xxl,
+      ),
       children: [
-        Center(
-          child: CircleAvatar(
-            radius: 44,
-            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
-            backgroundImage: _logoController.text.trim().isNotEmpty
-                ? NetworkImage(_logoController.text.trim())
-                : null,
-            child: _logoController.text.trim().isEmpty
-                ? Icon(Icons.storefront_outlined, size: 36, color: theme.colorScheme.primary)
-                : null,
+        // --- Letterhead ---------------------------------------------
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _LogoCircle(url: _logoController.text.trim(), name: _nameController.text),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${widget.profile.level}. BÖLÜM — ATÖLYENİN GELİŞİMİ',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: atelier.inkMuted,
+                      letterSpacing: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Theme(
+                    data: theme.copyWith(inputDecorationTheme: underline),
+                    child: TextField(
+                      controller: _nameController,
+                      style: theme.textTheme.headlineSmall,
+                      decoration: const InputDecoration(isDense: true, border: InputBorder.none),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Theme(
+          data: theme.copyWith(inputDecorationTheme: underline),
+          child: TextField(
+            controller: _descriptionController,
+            maxLines: 2,
+            style: theme.textTheme.bodyMedium,
+            decoration: const InputDecoration(
+              isDense: true,
+              hintText: 'Mağazanı bir cümleyle tanıt…',
+            ),
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
-        TextField(
-          controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Butik adı'),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        TextField(
-          controller: _descriptionController,
-          decoration: const InputDecoration(labelText: 'Mağaza açıklaması'),
-          maxLines: 3,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        TextField(
-          controller: _logoController,
-          decoration: const InputDecoration(
-            labelText: 'Logo görsel URL (opsiyonel)',
+        const SizedBox(height: AppSpacing.sm),
+        Theme(
+          data: theme.copyWith(inputDecorationTheme: underline),
+          child: TextField(
+            controller: _logoController,
+            keyboardType: TextInputType.url,
+            style: theme.textTheme.bodySmall,
+            decoration: const InputDecoration(isDense: true, labelText: 'Logo görsel URL (opsiyonel)'),
+            onChanged: (_) => setState(() {}),
           ),
-          keyboardType: TextInputType.url,
-          onChanged: (_) => setState(() {}),
         ),
-        const SizedBox(height: AppSpacing.lg),
-        FilledButton(
-          onPressed: (_isDirty && !_isSaving) ? _save : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-            child: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Kaydet'),
-          ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Icon(Icons.account_balance_wallet_outlined, size: 15, color: atelier.inkMuted),
+            const SizedBox(width: 6),
+            Text(
+              '${Money.format(widget.profile.virtualBalance)} sanal bakiye',
+              style: AtelierTypography.ledger(color: atelier.ink, fontSize: 13),
+            ),
+            const Spacer(),
+            if (_isDirty)
+              TextButton(
+                onPressed: _isSaving ? null : _save,
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Kaydet'),
+              ),
+          ],
         ),
         const SizedBox(height: AppSpacing.xl),
+
+        // --- Renovation checklist ------------------------------------
         const StoreUpgradesSection(),
-        const SizedBox(height: AppSpacing.lg),
-        Text('Yönetim', style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
-        Card(
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            children: [
-              _ManagementTile(
-                icon: Icons.local_offer_outlined,
-                title: 'Kampanyalar',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const CampaignsScreen()),
-                ),
-              ),
-              const Divider(height: 1),
-              _ManagementTile(
-                icon: Icons.confirmation_number_outlined,
-                title: 'Kuponlar',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const CouponsScreen()),
-                ),
-              ),
-              const Divider(height: 1),
-              _ManagementTile(
-                icon: Icons.bar_chart_outlined,
-                title: 'İstatistikler',
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const StatisticsScreen()),
-                ),
-              ),
-            ],
+        const SizedBox(height: AppSpacing.xl),
+
+        // --- Other notebooks ------------------------------------------
+        Text(
+          'DİĞER DEFTERLER',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: atelier.inkMuted,
+            letterSpacing: 2.0,
           ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        LedgerRow(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const CampaignsScreen()),
+          ),
+          child: _NotebookLink(icon: Icons.push_pin_outlined, label: 'Kampanyalar'),
+        ),
+        LedgerRow(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const CouponsScreen()),
+          ),
+          child: _NotebookLink(icon: Icons.confirmation_number_outlined, label: 'Kuponlar'),
+        ),
+        LedgerRow(
+          showDivider: false,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const StatisticsScreen()),
+          ),
+          child: _NotebookLink(icon: Icons.auto_stories_outlined, label: 'Satış Notları'),
         ),
       ],
     );
   }
 }
 
-class _ManagementTile extends StatelessWidget {
-  const _ManagementTile({required this.icon, required this.title, required this.onTap});
+class _LogoCircle extends StatelessWidget {
+  const _LogoCircle({required this.url, required this.name});
 
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
+  final String url;
+  final String name;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(icon, color: theme.colorScheme.primary),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
+    final atelier = theme.extension<AtelierColors>() ?? AtelierColors.light;
+    final uri = Uri.tryParse(url);
+    final hasValidUrl = url.isNotEmpty && uri != null && uri.isAbsolute;
+
+    Widget monogram() => Center(
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : '•',
+            style: theme.textTheme.titleLarge?.copyWith(color: atelier.ink),
+          ),
+        );
+
+    return Container(
+      width: 52,
+      height: 52,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: atelier.paperSurface,
+        shape: BoxShape.circle,
+        border: Border.all(color: atelier.hairline),
+      ),
+      child: hasValidUrl
+          ? Image.network(
+              url,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => monogram(),
+            )
+          : monogram(),
+    );
+  }
+}
+
+class _NotebookLink extends StatelessWidget {
+  const _NotebookLink({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final atelier = theme.extension<AtelierColors>() ?? AtelierColors.light;
+
+    return Row(
+      children: [
+        Icon(icon, size: 19, color: atelier.ink),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
+        Icon(Icons.chevron_right, size: 18, color: atelier.inkMuted),
+      ],
     );
   }
 }

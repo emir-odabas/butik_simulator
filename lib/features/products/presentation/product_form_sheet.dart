@@ -163,7 +163,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   DropdownButtonFormField<String>(
-                    value: _category,
+                    initialValue: _category,
                     decoration: const InputDecoration(labelText: 'Kategori'),
                     items: [
                       for (final c in ProductCategories.defaults)

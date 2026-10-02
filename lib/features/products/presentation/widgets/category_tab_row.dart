@@ -22,8 +22,6 @@ class CategoryTabRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final atelier = Theme.of(context).extension<AtelierColors>() ?? AtelierColors.light;
-
     return SizedBox(
       height: 34,
       child: ListView(

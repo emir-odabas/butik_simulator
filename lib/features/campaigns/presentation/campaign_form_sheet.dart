@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/design/components/clipboard_sheet.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/id_generator.dart';
 import '../../../data/models/campaign.dart';
@@ -93,75 +94,78 @@ class _CampaignFormSheetState extends ConsumerState<_CampaignFormSheet> {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
-          return Form(
-            key: _formKey,
-            child: ListView(
-              controller: scrollController,
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.md,
-                AppSpacing.xl,
-              ),
-              children: [
-                Text('Yeni Kampanya', style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: AppSpacing.lg),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Kampanya adı'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Ad gerekli' : null,
+          return ClipboardSheet(
+            expand: true,
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                  AppSpacing.xl,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'Açıklama'),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _discountController,
-                  decoration: const InputDecoration(labelText: 'İndirim oranı (%)'),
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'İndirim oranı gerekli';
-                    final value = double.tryParse(v.trim());
-                    if (value == null || value <= 0 || value > 90) return 'Geçersiz oran (1-90)';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _pickDate(isStart: true),
-                        child: Text('Başlangıç: ${dateFormat.format(_startDate)}'),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _pickDate(isStart: false),
-                        child: Text('Bitiş: ${dateFormat.format(_endDate)}'),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                FilledButton(
-                  onPressed: _isSaving ? null : _save,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Kampanyayı Oluştur'),
+                children: [
+                  Text('Yeni Kampanya', style: Theme.of(context).textTheme.headlineSmall),
+                  const SizedBox(height: AppSpacing.lg),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Kampanya adı'),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Ad gerekli' : null,
                   ),
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.lg),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(labelText: 'Açıklama'),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  TextFormField(
+                    controller: _discountController,
+                    decoration: const InputDecoration(labelText: 'İndirim oranı (%)'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'İndirim oranı gerekli';
+                      final value = double.tryParse(v.trim());
+                      if (value == null || value <= 0 || value > 90) return 'Geçersiz oran (1-90)';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _pickDate(isStart: true),
+                          child: Text('Başlangıç: ${dateFormat.format(_startDate)}'),
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => _pickDate(isStart: false),
+                          child: Text('Bitiş: ${dateFormat.format(_endDate)}'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  FilledButton(
+                    onPressed: _isSaving ? null : _save,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Kampanyayı Oluştur'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },

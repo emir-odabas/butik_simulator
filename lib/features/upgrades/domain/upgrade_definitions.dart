@@ -31,7 +31,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'decoration',
     title: 'Dekorasyon',
-    description: 'Mağazanı görsel olarak zenginleştir.',
+    description: 'Mağazanı görsel olarak zenginleştir.\n(Etki: Siparişlerde ürün adetini artırır)',
     icon: Icons.local_florist_outlined,
     maxLevel: 5,
     baseCost: 200,
@@ -39,7 +39,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'premium_theme',
     title: 'Premium Tema',
-    description: 'Butiğine özel, daha şık bir görünüm aç.',
+    description: 'Butiğine özel, daha şık bir görünüm aç.\n(Etki: Satılan ürünlerin fiyatını %5 artırır)',
     icon: Icons.auto_awesome_outlined,
     maxLevel: 5,
     baseCost: 400,
@@ -47,7 +47,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'photo_studio',
     title: 'Fotoğraf Stüdyosu',
-    description: 'Ürün fotoğraflarının kalitesini yükselt.',
+    description: 'Ürün fotoğraflarının kalitesini yükselt.\n(Etki: Her üründe viral satış (2x adet) ihtimali ekler)',
     icon: Icons.camera_alt_outlined,
     maxLevel: 5,
     baseCost: 300,
@@ -55,7 +55,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'warehouse',
     title: 'Depo',
-    description: 'Daha fazla stok tutma kapasitesi kazan.',
+    description: 'Daha fazla stok tutma kapasitesi kazan.\n(Etki: Siparişlerdeki ürün çeşitliliğini artırır)',
     icon: Icons.warehouse_outlined,
     maxLevel: 5,
     baseCost: 250,
@@ -63,7 +63,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'showcase',
     title: 'Vitrin',
-    description: 'Öne çıkan ürünlerini daha etkili sergile.',
+    description: 'Öne çıkan ürünlerini daha etkili sergile.\n(Etki: Müşterilerin sipariş verme sıklığını hızlandırır)',
     icon: Icons.storefront_outlined,
     maxLevel: 5,
     baseCost: 350,
@@ -71,7 +71,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'advertising',
     title: 'Reklam',
-    description: 'Mağazana daha fazla ziyaretçi çek.',
+    description: 'Mağazana daha fazla ziyaretçi çek.\n(Etki: Sipariş geldiğinde çifte sipariş gelme şansını artırır)',
     icon: Icons.campaign_outlined,
     maxLevel: 5,
     baseCost: 300,
@@ -79,7 +79,7 @@ final List<UpgradeDefinition> upgradeDefinitions = [
   UpgradeDefinition(
     id: 'customer_service',
     title: 'Müşteri Hizmetleri',
-    description: 'Müşteri memnuniyetini ve mağaza puanını artır.',
+    description: 'Müşteri memnuniyetini ve mağaza puanını artır.\n(Etki: Satışlardan ekstra bahşiş/prim geliri sağlar)',
     icon: Icons.support_agent_outlined,
     maxLevel: 5,
     baseCost: 200,

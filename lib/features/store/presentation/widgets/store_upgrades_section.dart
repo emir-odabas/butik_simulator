@@ -2,64 +2,62 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/design/atelier_colors.dart';
+import '../../../../core/design/atelier_typography.dart';
+import '../../../../core/design/components/ledger_row.dart';
+import '../../../../core/design/components/wax_seal_stamp.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/money.dart';
-import '../../../store/application/store_providers.dart';
 import '../../../upgrades/application/upgrade_providers.dart';
 import '../../../upgrades/domain/upgrade_definitions.dart';
 
+/// "Atölye Tadilat Kontrol Listesi" — a renovation punch-list, not a
+/// shop of colored-icon Card tiles. Each upgrade is a checklist line;
+/// a finished one gets a [WaxSealStamp] instead of a green checkmark
+/// icon in a circle.
 class StoreUpgradesSection extends ConsumerWidget {
   const StoreUpgradesSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final atelier = theme.extension<AtelierColors>() ?? AtelierColors.light;
     final levelsAsync = ref.watch(upgradeLevelsProvider);
-    final balance = ref.watch(storeProfileProvider).valueOrNull?.virtualBalance ?? 0;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.auto_awesome_outlined, color: theme.colorScheme.primary),
-                const SizedBox(width: AppSpacing.sm),
-                Text('Mağaza Geliştirmeleri', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Text(Money.format(balance), style: theme.textTheme.titleSmall),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              'Sanal bakiyenle mağazanı geliştir.',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            levelsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) => Text('Geliştirmeler yüklenemedi: $error'),
-              data: (levels) => Column(
-                children: [
-                  for (final def in upgradeDefinitions)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: _UpgradeRow(definition: def, currentLevel: levels[def.id] ?? 0),
-                    ),
-                ],
-              ),
-            ),
-          ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'ATÖLYE TADİLAT KONTROL LİSTESİ',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: atelier.inkMuted,
+            letterSpacing: 1.8,
+          ),
         ),
-      ),
+        const SizedBox(height: AppSpacing.sm),
+        levelsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) => Text('Geliştirmeler yüklenemedi: $error'),
+          data: (levels) => Column(
+            children: [
+              for (var i = 0; i < upgradeDefinitions.length; i++)
+                LedgerRow(
+                  showDivider: i != upgradeDefinitions.length - 1,
+                  child: _UpgradeChecklistLine(
+                    definition: upgradeDefinitions[i],
+                    currentLevel: levels[upgradeDefinitions[i].id] ?? 0,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _UpgradeRow extends ConsumerWidget {
-  const _UpgradeRow({required this.definition, required this.currentLevel});
+class _UpgradeChecklistLine extends ConsumerWidget {
+  const _UpgradeChecklistLine({required this.definition, required this.currentLevel});
 
   final UpgradeDefinition definition;
   final int currentLevel;
@@ -67,75 +65,80 @@ class _UpgradeRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final atelier = theme.extension<AtelierColors>() ?? AtelierColors.light;
     final isMaxed = currentLevel >= definition.maxLevel;
     final nextCost = isMaxed ? null : definition.costForLevel(currentLevel);
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-        borderRadius: BorderRadius.circular(AppSpacing.sm),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppSpacing.sm),
-            ),
-            child: Icon(definition.icon, size: 18, color: theme.colorScheme.primary),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(definition.title, style: theme.textTheme.bodyMedium),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    for (var i = 0; i < definition.maxLevel; i++)
-                      Padding(
-                        padding: const EdgeInsets.only(right: 3),
-                        child: Icon(
-                          Icons.circle,
-                          size: 8,
-                          color: i < currentLevel
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outlineVariant,
-                        ),
-                      ),
-                    const SizedBox(width: 6),
-                    Text('Seviye $currentLevel/${definition.maxLevel}',
-                        style: theme.textTheme.bodySmall),
-                  ],
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          isMaxed ? Icons.check_box : Icons.check_box_outline_blank,
+          size: 20,
+          color: isMaxed ? atelier.thread : atelier.ink,
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                definition.title,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  decoration: isMaxed ? TextDecoration.lineThrough : null,
+                  color: isMaxed ? atelier.inkMuted : atelier.ink,
                 ),
-              ],
+              ),
+              const SizedBox(height: 2),
+              Text(
+                definition.description,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isMaxed ? atelier.inkMuted : atelier.ink.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  for (var i = 0; i < definition.maxLevel; i++)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 3),
+                      child: Icon(
+                        Icons.circle,
+                        size: 6,
+                        color: i < currentLevel ? atelier.gold : atelier.hairline,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        if (isMaxed)
+          WaxSealStamp(label: 'Tamamlandı', color: atelier.thread, angle: 0)
+        else
+          TextButton(
+            onPressed: () => _purchase(context, ref),
+            child: Text(
+              Money.format(nextCost!),
+              style: AtelierTypography.ledger(color: atelier.seal, fontSize: 13),
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          if (isMaxed)
-            const Icon(Icons.check_circle, color: Colors.green, size: 22)
-          else
-            OutlinedButton(
-              onPressed: () async {
-                final result = await ref.read(upgradeLevelsProvider.notifier).upgrade(definition.id);
-                if (!context.mounted) return;
-                if (result == UpgradePurchaseResult.success) {
-                  HapticFeedback.mediumImpact();
-                }
-                final message = switch (result) {
-                  UpgradePurchaseResult.success => '${definition.title} geliştirildi!',
-                  UpgradePurchaseResult.insufficientBalance => 'Yetersiz sanal bakiye.',
-                  UpgradePurchaseResult.maxLevelReached => 'Bu geliştirme zaten maksimum seviyede.',
-                };
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-              },
-              child: Text(Money.format(nextCost!)),
-            ),
-        ],
-      ),
+      ],
     );
+  }
+
+  Future<void> _purchase(BuildContext context, WidgetRef ref) async {
+    final result = await ref.read(upgradeLevelsProvider.notifier).upgrade(definition.id);
+    if (!context.mounted) return;
+    if (result == UpgradePurchaseResult.success) {
+      HapticFeedback.mediumImpact();
+    }
+    final message = switch (result) {
+      UpgradePurchaseResult.success => '${definition.title} geliştirildi!',
+      UpgradePurchaseResult.insufficientBalance => 'Yetersiz sanal bakiye.',
+      UpgradePurchaseResult.maxLevelReached => 'Bu geliştirme zaten maksimum seviyede.',
+    };
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
