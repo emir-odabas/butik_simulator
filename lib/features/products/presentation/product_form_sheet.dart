@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/product_categories.dart';
 import '../../../core/design/atelier_colors.dart';
@@ -76,6 +78,16 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _imageUrlController.text = image.path;
+      });
+    }
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -134,6 +146,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
         expand: false,
         builder: (context, scrollController) {
           return ClipboardSheet(
+            expand: true,
             child: Form(
               key: _formKey,
               child: ListView(
@@ -220,20 +233,24 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                         ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  _PhotoPinSlot(url: _imageUrlController.text.trim(), atelier: atelier),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: _PhotoPinSlot(url: _imageUrlController.text.trim(), atelier: atelier),
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   TextFormField(
                     controller: _imageUrlController,
                     decoration: const InputDecoration(
-                      labelText: 'Görsel URL',
-                      helperText: 'Galeriden fotoğraf ekleme sonraki fazda gelecek.',
+                      labelText: 'Görsel URL veya Dosya Yolu',
+                      helperText: 'Galeriden seçmek için yukarıdaki pin alanına tıklayın.',
                     ),
                     keyboardType: TextInputType.url,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return null;
-                      final uri = Uri.tryParse(v.trim());
-                      if (uri == null || !uri.isAbsolute) return 'Geçersiz URL';
-                      return null;
+                      final isWeb = v.trim().startsWith('http');
+                      if (isWeb) return null;
+                      if (File(v.trim()).existsSync()) return null;
+                      return 'Geçersiz URL veya dosya yolu';
                     },
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -284,8 +301,8 @@ class _PhotoPinSlot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uri = Uri.tryParse(url);
-    final hasValidUrl = url.isNotEmpty && uri != null && uri.isAbsolute;
+    final isNetwork = url.startsWith('http://') || url.startsWith('https://');
+    final hasValidUrl = url.isNotEmpty;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -299,12 +316,19 @@ class _PhotoPinSlot extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: hasValidUrl
-              ? Image.network(
-                  url,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
-                )
+              ? (isNetwork
+                  ? Image.network(
+                      url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
+                    )
+                  : Image.file(
+                      File(url),
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
+                    ))
               : Icon(Icons.add_photo_alternate_outlined, color: atelier.inkMuted),
         ),
         Positioned(

@@ -93,7 +93,7 @@ class _UpgradeChecklistLine extends ConsumerWidget {
               Text(
                 definition.description,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: isMaxed ? atelier.inkMuted : atelier.ink.withOpacity(0.7),
+                  color: isMaxed ? atelier.inkMuted : atelier.ink.withValues(alpha: 0.7),
                 ),
               ),
               const SizedBox(height: 4),

@@ -13,10 +13,6 @@ import '../../../core/utils/id_generator.dart';
 import '../../upgrades/application/upgrade_providers.dart';
 import 'order_providers.dart';
 
-/// Interval between automatic orders (in seconds).
-/// Default: 120 s (2 minutes). Adjust as desired.
-const _intervalSeconds = 120;
-
 /// Riverpod provider that keeps the auto-order timer alive for as long as
 /// a widget is watching it. Wire it up once in [BoutiqueApp] with
 /// `ref.watch(autoOrderServiceProvider)` so it runs app-wide.
