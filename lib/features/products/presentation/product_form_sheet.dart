@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -79,6 +80,19 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
   }
 
   Future<void> _pickImage() async {
+    // `dart:io.File` has no implementation on web — constructing one
+    // throws `UnsupportedError` at runtime. The web build (this app is
+    // deployed to GitHub Pages) must keep using the URL field instead;
+    // only native platforms get the gallery picker.
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Web sürümünde galeriden seçim yok — görsel URL\'si kullan.'),
+        ),
+      );
+      return;
+    }
+
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
@@ -247,9 +261,10 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                     keyboardType: TextInputType.url,
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return null;
-                      final isWeb = v.trim().startsWith('http');
-                      if (isWeb) return null;
-                      if (File(v.trim()).existsSync()) return null;
+                      if (v.trim().startsWith('http')) return null;
+                      // A local file path is only meaningful on native
+                      // platforms — `File` has no web implementation.
+                      if (!kIsWeb && File(v.trim()).existsSync()) return null;
                       return 'Geçersiz URL veya dosya yolu';
                     },
                   ),
@@ -303,6 +318,11 @@ class _PhotoPinSlot extends StatelessWidget {
   Widget build(BuildContext context) {
     final isNetwork = url.startsWith('http://') || url.startsWith('https://');
     final hasValidUrl = url.isNotEmpty;
+    // A local file path can only ever be previewed on native platforms
+    // — on web, `File` throws `UnsupportedError` the instant it's
+    // constructed, so a stray local-looking path there just falls back
+    // to the broken-image icon instead of crashing the sheet.
+    final canPreviewAsFile = !isNetwork && !kIsWeb;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -315,21 +335,23 @@ class _PhotoPinSlot extends StatelessWidget {
             border: Border.all(color: atelier.hairline),
           ),
           clipBehavior: Clip.antiAlias,
-          child: hasValidUrl
-              ? (isNetwork
+          child: !hasValidUrl
+              ? Icon(Icons.add_photo_alternate_outlined, color: atelier.inkMuted)
+              : isNetwork
                   ? Image.network(
                       url,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) =>
                           Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
                     )
-                  : Image.file(
-                      File(url),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
-                    ))
-              : Icon(Icons.add_photo_alternate_outlined, color: atelier.inkMuted),
+                  : canPreviewAsFile
+                      ? Image.file(
+                          File(url),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
+                        )
+                      : Icon(Icons.broken_image_outlined, color: atelier.inkMuted),
         ),
         Positioned(
           top: -6,
